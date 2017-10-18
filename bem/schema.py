@@ -2,7 +2,8 @@ from sql_tools.mysql import (MYSQL,
                              INT,
                              VARCHAR,
                              TIMESTAMP,
-                             ENUM)
+                             ENUM,
+                             BOOLEAN)
 
 bem_schema = {
     "bem_db" : [
@@ -11,6 +12,7 @@ bem_schema = {
           "fields" : {
               "ID" : INT(10, True, auto_increment=True),
               "USER" : VARCHAR(30),
+              "SATSC" : BOOLEAN(default=0),
           },
           "extra" : {
                 "primary_key" : "ID",
@@ -22,13 +24,13 @@ bem_schema = {
 
 user_schema = {
     "user_purchases" : {
-        "name" : "{0}_purcharses",
+        "name" : "{0}_purchases",
         "fields" : {
             "ID" : INT(10, True, auto_increment=True),
-            "NAME" : VARCHAR(30),
+            "NAME" : VARCHAR(50),
             "VALUE" : VARCHAR(10),
             "DATE" : TIMESTAMP(default='NOW'),
-            "TYPE" : VARCHAR(30, default="UNKNOWN"),
+            "TYPE" : VARCHAR(50, default="UNKNOWN"),
         },
         "extra" : {
               "primary_key" : "ID",
@@ -39,10 +41,13 @@ user_schema = {
         "name" : "{0}_iocome",
         "fields" : {
             "ID" : INT(10, True, auto_increment=True),
-            "NAME" : VARCHAR(30),
+            "NAME" : VARCHAR(50),
             "VALUE" : VARCHAR(10),
             "DATE" : TIMESTAMP(default='NOW'),
-            "TYPE" : VARCHAR(30, default"UNKNOWN"),
+            "TYPE" : VARCHAR(50, default="UNKNOWN"),
+            "PERIOD" : VARCHAR(10, default="1M"),
+            "DATE_LIMIT" : VARCHAR(30, default="NaN-NaN-NaN"),
+            "PERIOD_LIMIT" : INT(4, default=12),
         },
         "extra" : {
               "primary_key" : "ID",
@@ -68,11 +73,16 @@ def make_bem_schema():
                 MYSQL.table_primary_start(database, table["name"],
                                           table["auto_incr"])
 
+
 def check_bem_schema():
-    pass
+    check_db = 'bem_db' in MYSQL.databases()
+    check_users = 'bem_users' in MYSQL.tables('bem_db')
+    return check_db and check_users
+
 
 def drop_bem_schema():
-    pass
+    MYSQL.remove_database('bem_db')
+
 
 def make_user_schema(user_name):
     for table in user_schema.values():
@@ -86,8 +96,11 @@ def make_user_schema(user_name):
 
 
 def check_user_schema(user_name):
-    pass
+    exists_p = '{0}_purchases'.format(user_name) in MYSQL.tables('bem_db')
+    exists_c = '{0}_iocome'.format(user_name) in MYSQL.tables('bem_db')
+    return exists_c and exists_p
 
 
 def drop_user_schema(user_name):
-    pass
+    MYSQL.remove_table('bem_db', "{0}_purchases".format(user_name))
+    MYSQL.remove_table('bem_db', "{0}_iocome".format(user_name))
