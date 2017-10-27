@@ -31,9 +31,54 @@ body {
     padding-right: 60px;
 }
 
+.actual-menu-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.users-menu-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.schema-menu-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.records-menu-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.title-in-mid {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin: 25px auto;
+}
+
+.actual-menu {
+    padding: 25px;
+    color: red;
+}
+
 .refresh-button {
     color: red;
     padding-left: 50px;
+}
+
+.tableau {
+    border: 0;
+    color: black;
+}
+
+table, th, td {
+    border: 0.1px dotted black;
 }
 
 #top-slog {
