@@ -1,0 +1,2 @@
+class BemUser(object):
+    pass

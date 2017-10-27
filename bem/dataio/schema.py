@@ -10,19 +10,18 @@ bem_schema = {
       {
           "name" : "bem_users",
           "fields" : {
-              "ID" : INT(10, True, auto_increment=True),
               "USER" : VARCHAR(30),
               "SATSC" : BOOLEAN(default=0),
           },
           "extra" : {
-                "primary_key" : "ID",
+                "primary_key" : "USER",
           },
-          "auto_incr" : 0,
+          "auto_incr" : None,
       }
     ]
 }
 
-user_schema = {
+UPS = {
     "user_purchases" : {
         "name" : "{0}_purchases",
         "fields" : {
@@ -36,7 +35,10 @@ user_schema = {
               "primary_key" : "ID",
         },
         "auto_incr" : 0,
-    },
+    }
+}
+
+UCS = {
     "user_charges" : {
         "name" : "{0}_iocome",
         "fields" : {
@@ -47,7 +49,7 @@ user_schema = {
             "TYPE" : VARCHAR(50, default="UNKNOWN"),
             "PERIOD" : VARCHAR(10, default="1M"),
             "DATE_LIMIT" : VARCHAR(30, default="NaN-NaN-NaN"),
-            "PERIOD_LIMIT" : INT(4, default=12),
+            "PERIOD_LIMIT" : INT(4, default=0),
         },
         "extra" : {
               "primary_key" : "ID",
@@ -77,30 +79,67 @@ def make_bem_schema():
 def check_bem_schema():
     check_db = 'bem_db' in MYSQL.databases()
     check_users = 'bem_users' in MYSQL.tables('bem_db')
-    return check_db and check_users
+    status = check_db and check_users
+    if status:
+        return 1
+    elif check_db:
+        return -1
+    return -2
 
 
 def drop_bem_schema():
-    MYSQL.remove_database('bem_db')
-
-
-def make_user_schema(user_name):
-    for table in user_schema.values():
-        MYSQL.make_table('bem_db',
-                         table["name"].format(user_name),
-                         **table["fields"],
-                         **table["extra"])
-        if table["auto_incr"] != None:
-            MYSQL.table_primary_start('bem_db', table["name"].format(user_name),
-                                      table["auto_incr"])
+    status = check_bem_schema()
+    if status or status == -1:
+        MYSQL.remove_database('bem_db')
 
 
 def check_user_schema(user_name):
     exists_p = '{0}_purchases'.format(user_name) in MYSQL.tables('bem_db')
     exists_c = '{0}_iocome'.format(user_name) in MYSQL.tables('bem_db')
-    return exists_c and exists_p
+    if exists_p and exists_c:
+        return True
+    elif exists_p:
+        return -1
+    elif exists_c:
+        return -2
+    return -3
+
+
+def _make_user_ups(user_name):
+    ups = UPS['user_purchases']
+    MYSQL.make_table('bem_db', ups['name'].format(user_name),
+                     **ups['fields'], **ups['extra'])
+    MYSQL.table_primary_start('bem_db', ups["name"].format(user_name),
+                              ups["auto_incr"])
+
+
+def _make_user_ucs(user_name):
+    ucs = UCS['user_charges']
+    MYSQL.make_table('bem_db', ucs['name'].format(user_name),
+                     **ucs['fields'], **ucs['extra'])
+    MYSQL.table_primary_start('bem_db', ucs["name"].format(user_name),
+                              ucs["auto_incr"])
+
+
+def make_user_schema(user_name):
+    status = check_user_schema(user_name)
+    if status == -1:
+        _make_user_ups(user_name)
+    elif status == -2:
+        _make_user_ucs(user_name)
+    elif status == -3:
+        _make_user_ups(user_name)
+        _make_user_ucs(user_name)
 
 
 def drop_user_schema(user_name):
-    MYSQL.remove_table('bem_db', "{0}_purchases".format(user_name))
-    MYSQL.remove_table('bem_db', "{0}_iocome".format(user_name))
+    status = check_user_schema(user_name)
+    if status == -2:
+        MYSQL.remove_table('bem_db', "{0}_iocome".format(user_name))
+    elif status == -1:
+        MYSQL.remove_table('bem_db', "{0}_purchases".format(user_name))
+    elif status == -3:
+        pass
+    elif status:
+        MYSQL.remove_table('bem_db', "{0}_iocome".format(user_name))
+        MYSQL.remove_table('bem_db', "{0}_purchases".format(user_name))

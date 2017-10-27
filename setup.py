@@ -8,7 +8,4 @@ setup(
     author='',
     author_email='',
     packages=find_packages(exclude=('docs', '.circleci')),
-    package_data={'bem': ['config/*.ini']},
-    include_package_data=True,
-    zip_safe=False,
 )

@@ -1,0 +1,2 @@
+class UserPurchases(object):
+    pass

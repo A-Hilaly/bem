@@ -1,9 +1,0 @@
-{
-    "bem_db" : [
-      {
-          "table" : "bem_users",
-          "ID" : "INT(10)",
-          "USER" : "VARCHAR(10)"
-      }
-    ]
-}
